@@ -176,20 +176,21 @@ service AgentBrainService {
 
 
 **4. 生成的？_grpc.pb.go理解**  
-用来定义客户端和服务端之间的grpc通信相关，
+用来定义客户端和服务端之间的grpc通信相关  
 ![img_11.png](image/img_11.png)
 图中`AgentBrainServiceServer`接口定义的方法
 `Chat11(context.Context, *AgentBrain11Req) (*AgentBrainResp, error)`
 可以看到比之前在`rpc Chat11 (AgentBrain11Req) returns (AgentBrainResp) {}`
 中多了`context.Context` 和 `error`，我的理解，context.Context在这里类似于http
-的相应头。
+的响应头。
 
 ### main()函数理解
 
-**1. `agentBrainServer`结构体**
-![img_12.png](image/img_12.png)
-第一行`rpc.UnimplementedAgentBrainServiceServer`相当于定义了一个rpc服务
+**1. `agentBrainServer`结构体**   
 
+![img_12.png](image/img_12.png)
+
+- 第一行`rpc.UnimplementedAgentBrainServiceServer`相当于定义了一个rpc服务
 newAgentBrainServer(新建AgentBrain服务器)步骤
 1. 从envs.EnvAgentBrainPreloadEng中读取app_id 和 scene_id.
    - 这里有个问题，这个环境变量读取是怎么样的？
@@ -248,7 +249,6 @@ engk{}为key查询map:engines,如果查到就返回引擎e.(engine.AgentEngine)�
 8. buildEng()  
    查不到，新建一个Eng，通过ctx,AppID和SceneID。engine.New()
    1. confcenter.GetAppCenter(ctx, appID) 
-    
 
 
 
