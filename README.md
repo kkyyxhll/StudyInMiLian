@@ -139,7 +139,7 @@ llm_config :
 
 
 
-
+————————————————————————————————————————————————————
 
 # chat11(单聊) <a id="section3"></a>
 
@@ -192,11 +192,9 @@ service AgentBrainService {
 
 - 第一行`rpc.UnimplementedAgentBrainServiceServer`相当于定义了一个rpc服务
 newAgentBrainServer(新建AgentBrain服务器)步骤
-1. 从envs.EnvAgentBrainPreloadEng中读取app_id 和 scene_id.
-   - 这里有个问题，这个环境变量读取是怎么样的？
-
-
-
+- 从envs.EnvAgentBrainPreloadEng中读取app_id 和 scene_id.
+ 
+    
 1. sLockShards := 8  
 2. newAgentBrainServer(sLockShards)  
 3. agentBrainServer结构体理解：
@@ -277,3 +275,129 @@ service AgentBrainService {
 - ......
 
 
+"/Users/loukang/Desktop/golangProjects/agent-brain/cmd/server/config.yaml"
+```golang
+service:
+  name: agent-brain
+  type: grpc
+  port: 8880
+  close_timeout: 1s
+  development: true
+```
+
+![img.png](img.png)
+![img_1.png](img_1.png)
+
+
+
+
+
+
+
+## main() 函数理解
+
+### 1. engine.SetUp(false,true)
+- 通过Nacos配置中心来配置相应组件， 如先通过GetCenter得到相应的配置中心(GetCenter通过
+i和id例如(i="admin",id=nil)，他会生成一个对应的key，在holder.centers中查有无对应的
+配置中心value，无则建，然后返回一个配置中心，根据环境变量得到配置中心传递的一个yaml文
+件并且转换为config.Admin的对象cfg,然后 通过这个cfg去初始化Redis, DB, GeekApiMapper,
+LLMCenterCfgKey。  
+- ![Setup.png](Setup.png)
+
+### 2. newAgentBrainServer(sLockShards)
+
+#### 步骤
+1. 初始化`agentBrainServer`对象。
+2. 通过`envs.EnvAgentBrainPreloadEng.Val()`读取cfg，返回格式`app_id:scene_id`,
+然后将(app_id和scene_id)作为key去getEng()，如果get不到，就build一个新的engine，调用New()。
+然后将engine加入map中，map的key类型为engK，value类型为AgentEngine。
+
+
+##### New() ：新建引擎
+`func New(ctx context.Context, appID int, sceneID string) (AgentEngine, error)`
+1. 通过`GetAppCenter(ctx, appID)`获取配置中心，GetAppCenter()中调用了`GetCenter(ctx, 
+App, &id)`即以App(App:"app")和`app_id.%d`(%d=appID)去获取配置中心，没有则新建。
+2. 通过config.App对象cfg，用来保存当前SceneID对应的信息从上一步得到的配置中心中获取以scene
+ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
+![img_8.png](img_8.png)
+   - `Executor` 用于配置业务逻辑的执行器
+   - `History` 对该场景的历史存取行为进行配置
+   - `LLM` 用于对场景专属的 LLM 资源进行配置
+![img_10.png](img_10.png)
+3. 初始化engine，engine包括meta和其他配置,meta包括*config.App,AppID,SceneID.
+![img_11.png](img_11.png)
+4. 
+##### agentBrainServer结构体理解
+1. rpc.UnimplementedAgentBrainServiceServer ： 
+     - 定义rpc通信服务相关
+     - 结构体有一个绑定方法 Chat11(context.Context, *AgentBrain11Req) (*AgentBrainResp, error)
+         - 相比于在proto文件中定义的服务：rpc Chat11 (AgentBrain11Req) returns (AgentBrainResp)，
+           可以看到多了两个参数，一个是context.Context，我对这个的理解就是http的请求头，封装metadata；
+           一个是error。
+2. engines sync.Map : 
+     - 引擎存储
+3. lock : syncutil.IShardsLock[string]
+     - 通过sLockShards初始化，**这里就大致了解了一下，是一种运用了分片概念的分布式锁定机制。**
+4. ![img_6.png](img_6.png)
+
+### 启动rpc服务
+rpc.RegisterAgentBrainServiceServer(ez.GrpcServer(), serviceServer)
+
+
+
+
+
+
+
+
+### 架构理解
+- ![img_14.png](img_14.png)
+### Context类图 
+`AgentContext`包括两个`Context`,`RuntimeContext`和`MetaContext`。
+- `RuntimeContext` : 
+- `MetaContext` : 类似于`http`的请求头。标识具体场景和场景配置(`app_id`和
+`scene_id`确定具体场景，`AppConfig`确定具体场景配置)
+![img_13.png](img_13.png)
+### App结构体详解
+`App`结构体中包括
+- `Executor` : 具体场景执行配置器
+- `LLM` : 具体场景大模型配置
+- `History` ：具体场景聊天历史管理
+![img_15.png](img_15.png)
+
+### newAgentBrainServer启动步骤
+1. 初始化`agentBrainServer`对象**s**，[agentBrainServer结构体理解链接](#AgentBrainServer)
+2. 从`envs.EnvAgentBrainPreloadEng.Val()`中读取已有的(`"app_id:scene_id"`)对,
+将`app_id和scene_id`封装进`engK`中，在**s**的`engines`中查找对应引擎，如果查不到，
+则新建引擎，[具体新建引擎理解链接](#New),这一步过后，在**s**中的`engines`中都可以通过
+`engk`(`app_id`,`scene_id`)查询到对应的`AgentEngine`(即`engine`)。
+3. 
+
+
+##### New() ：新建引擎<a id="New"></a>
+`func New(ctx context.Context, appID int, sceneID string) (AgentEngine, error)`
+1. 通过`GetAppCenter(ctx, appID)`获取配置中心，GetAppCenter()中调用了`GetCenter(ctx, 
+App, &id)`即以App(App:"app")和`app_id.%d`(%d=appID)去获取配置中心，没有则新建。
+2. 通过config.App对象cfg，用来保存当前SceneID对应的信息从上一步得到的配置中心中获取以scene
+ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
+![img_8.png](img_8.png)
+   - `Executor` 用于配置业务逻辑的执行器
+   - `History` 对该场景的历史存取行为进行配置
+   - `LLM` 用于对场景专属的 LLM 资源进行配置
+![img_10.png](img_10.png)
+3. 初始化engine，engine包括meta和其他配置,meta包括*config.App,AppID,SceneID.
+![img_11.png](img_11.png)
+
+
+
+##### agentBrainServer结构体理解<a id="AgentBrainServer"></a>
+1. rpc.UnimplementedAgentBrainServiceServer ： 
+     - 定义rpc通信服务相关
+     - 结构体有一个绑定方法 Chat11(context.Context, *AgentBrain11Req) (*AgentBrainResp, error)
+         - 相比于在proto文件中定义的服务：rpc Chat11 (AgentBrain11Req) returns (AgentBrainResp)，
+           可以看到多了两个参数，一个是context.Context，我对这个的理解就是http的请求头，封装metadata；
+           一个是error。
+2. engines sync.Map : 
+     - 存储引擎 key类型为engK，value类型为AgentEngine。即能通过(app_id和scene_id)查找对应engine。
+3. lock : syncutil.IShardsLock[string]
+     - 通过sLockShards初始化，**这里就大致了解了一下，是一种运用了分片概念的分布式锁定机制。**
