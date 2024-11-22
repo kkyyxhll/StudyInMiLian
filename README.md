@@ -5,7 +5,7 @@
 1. [Agent-brain 11.19笔记](#section1)
 2. [开发者文档学习 11.20笔记](#section2)
 3. [chat11 11.21笔记](#section3)
-
+4. [chat11 11.22笔记](#section4)
 ## Agent-brain<a id="section1"></a>
 ### 引擎系统
 - RAG(需要维护知识库？检索增强生成。)
@@ -302,7 +302,7 @@ i和id例如(i="admin",id=nil)，他会生成一个对应的key，在holder.cent
 配置中心value，无则建，然后返回一个配置中心，根据环境变量得到配置中心传递的一个yaml文
 件并且转换为config.Admin的对象cfg,然后 通过这个cfg去初始化Redis, DB, GeekApiMapper,
 LLMCenterCfgKey。  
-- ![Setup.png](Setup.png)
+- ![Setup.png](image/Setup.png)
 
 ### 2. newAgentBrainServer(sLockShards)
 
@@ -347,7 +347,7 @@ rpc.RegisterAgentBrainServiceServer(ez.GrpcServer(), serviceServer)
 
 
 
-
+## chat11 11.22笔记<a id="section4"></a>
 
 
 ### 架构理解
@@ -401,3 +401,19 @@ ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
      - 存储引擎 key类型为engK，value类型为AgentEngine。即能通过(app_id和scene_id)查找对应engine。
 3. lock : syncutil.IShardsLock[string]
      - 通过sLockShards初始化，**这里就大致了解了一下，是一种运用了分片概念的分布式锁定机制。**
+
+### rpc通信
+
+
+#### client
+chat11请求体
+![img.png](image/image_2/img.png)
+chat11响应体
+![img_1.png](image/image_2/img_1.png)
+
+更新MetaContext  
+![img_3.png](image/image_2/img_3.png)  
+更新RuntimeContext
+![img_4.png](image/image_2/img_4.png)  
+往ctx中注入AgentContext(即MetaContext+RuntimeContext)
+![img_5.png](image/image_2/img_5.png)
