@@ -285,8 +285,8 @@ service:
   development: true
 ```
 
-![img.png](img.png)
-![img_1.png](img_1.png)
+![img.png](image/image_1/img.png)
+![img_1.png](image/image_1/img_1.png)
 
 
 
@@ -319,13 +319,13 @@ LLMCenterCfgKey。
 App, &id)`即以App(App:"app")和`app_id.%d`(%d=appID)去获取配置中心，没有则新建。
 2. 通过config.App对象cfg，用来保存当前SceneID对应的信息从上一步得到的配置中心中获取以scene
 ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
-![img_8.png](img_8.png)
+![img_8.png](image/image_1/img_8.png)
    - `Executor` 用于配置业务逻辑的执行器
    - `History` 对该场景的历史存取行为进行配置
    - `LLM` 用于对场景专属的 LLM 资源进行配置
-![img_10.png](img_10.png)
+![img_10.png](image/image_1/img_10.png)
 3. 初始化engine，engine包括meta和其他配置,meta包括*config.App,AppID,SceneID.
-![img_11.png](img_11.png)
+![img_11.png](image/image_1/img_11.png)
 4. 
 ##### agentBrainServer结构体理解
 1. rpc.UnimplementedAgentBrainServiceServer ： 
@@ -338,7 +338,7 @@ ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
      - 引擎存储
 3. lock : syncutil.IShardsLock[string]
      - 通过sLockShards初始化，**这里就大致了解了一下，是一种运用了分片概念的分布式锁定机制。**
-4. ![img_6.png](img_6.png)
+4. ![img_6.png](image/image_1/img_6.png)
 
 ### 启动rpc服务
 rpc.RegisterAgentBrainServiceServer(ez.GrpcServer(), serviceServer)
@@ -351,19 +351,19 @@ rpc.RegisterAgentBrainServiceServer(ez.GrpcServer(), serviceServer)
 
 
 ### 架构理解
-- ![img_14.png](img_14.png)
+- ![img_14.png](image/image_1/img_14.png)
 ### Context类图 
 `AgentContext`包括两个`Context`,`RuntimeContext`和`MetaContext`。
 - `RuntimeContext` : 
 - `MetaContext` : 类似于`http`的请求头。标识具体场景和场景配置(`app_id`和
 `scene_id`确定具体场景，`AppConfig`确定具体场景配置)
-![img_13.png](img_13.png)
+![img_13.png](image/image_1/img_13.png)
 ### App结构体详解
 `App`结构体中包括
 - `Executor` : 具体场景执行配置器
 - `LLM` : 具体场景大模型配置
 - `History` ：具体场景聊天历史管理
-![img_15.png](img_15.png)
+![img_15.png](image/image_1/img_15.png)
 
 ### newAgentBrainServer启动步骤
 1. 初始化`agentBrainServer`对象**s**，[agentBrainServer结构体理解链接](#AgentBrainServer)
@@ -380,13 +380,13 @@ rpc.RegisterAgentBrainServiceServer(ez.GrpcServer(), serviceServer)
 App, &id)`即以App(App:"app")和`app_id.%d`(%d=appID)去获取配置中心，没有则新建。
 2. 通过config.App对象cfg，用来保存当前SceneID对应的信息从上一步得到的配置中心中获取以scene
 ID为key的yaml文件转结构体存入cfg中。 config.App结构体如下:
-![img_8.png](img_8.png)
+![img_8.png](image/image_1/img_8.png)
    - `Executor` 用于配置业务逻辑的执行器
    - `History` 对该场景的历史存取行为进行配置
    - `LLM` 用于对场景专属的 LLM 资源进行配置
-![img_10.png](img_10.png)
+![img_10.png](image/image_1/img_10.png)
 3. 初始化engine，engine包括meta和其他配置,meta包括*config.App,AppID,SceneID.
-![img_11.png](img_11.png)
+![img_11.png](image/image_1/img_11.png)
 
 
 
